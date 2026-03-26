@@ -78,27 +78,9 @@ Seamlessly embedded via Telegram SDK. Supports native theme adaptation, haptic f
 
 ---
 
-## 🚀 Getting Started
+## 🔒 Source Code
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/gajsin/strata.git
-   cd strata
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Add your Supabase and OpenAI keys
-   ```
-4. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
+> **Note:** This repository serves as a portfolio showcase. The full source code is closed/commercial, but the architecture and implementation details can be reviewed upon request during technical interviews.
 ---
 
 ## 📄 License
