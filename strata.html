@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strata — AI-ассистент для управления жизнью</title>
+    <meta name="description"
+        content="Кейс: Персональный AI-ассистент в Telegram Mini App. Голосовое управление задачами, финансами, привычками и заметками через OpenAI API.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ===== RESET & BASE ===== */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #18181b;
+            --bg-card: #202024;
+            --bg-card-hover: #27272a;
+            --accent: #3b82f6;
+            --accent-dim: #2563eb;
+            --accent-glow: rgba(59, 130, 246, 0.08);
+            --accent-glow-strong: rgba(59, 130, 246, 0.15);
+            --teal: #2dd4bf;
+            --teal-glow: rgba(45, 212, 191, 0.08);
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --border: #3f3f46;
+            --border-light: #52525b;
+            --gradient-accent: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
+            --gradient-hero: linear-gradient(135deg, #ffffff, #a1a1aa);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 40px rgba(59, 130, 246, 0.04);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===== TOP BANNER ===== */
+        .top-banner {
+            background: var(--bg-secondary);
+            padding: 14px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 2px solid transparent;
+            border-image: var(--gradient-accent) 1;
+        }
+
+        .top-banner h1 {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        .hero-text h2 {
+            font-family: 'Inter', sans-serif;
+            font-size: 56px;
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+            background: var(--gradient-hero);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-text .subtitle {
+            font-size: 17px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 32px;
+            max-width: 620px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tech-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .tech-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 0.3px;
+            transition: all 0.3s ease;
+        }
+
+        .tech-badge:hover {
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(59, 130, 246, 0.35);
+            color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* ===== SECTION HEADERS ===== */
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 32px;
+        }
+
+        .section-label::before {
+            content: '◆';
+            font-size: 8px;
+        }
+
+        /* ===== STATS ROW ===== */
+        .stats-section {
+            padding: 40px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            text-align: center;
+            transition: all 0.35s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(59, 130, 246, 0.25);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.06);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-value.gradient {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* ===== FEATURES SECTION ===== */
+        .features-section {
+            padding: 40px 0 60px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px 28px;
+            transition: all 0.35s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-accent);
+            opacity: 0;
+            transition: opacity 0.35s ease;
+        }
+
+        .feature-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--accent-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon.teal {
+            background: var(--teal-glow);
+        }
+
+        .feature-card h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.65;
+        }
+
+        /* ===== SCREENS SECTION ===== */
+        .screens-section {
+            padding: 40px 0 60px;
+        }
+
+        .screens-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .screen-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: calc(33.333% - 22px);
+            min-width: 300px;
+            max-width: 360px;
+        }
+
+        .screen-content {
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            background: transparent;
+            aspect-ratio: 9 / 19.5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 46px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+        }
+
+        .screen-wrapper:hover .screen-content {
+            transform: translateY(-8px);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 40px rgba(59, 130, 246, 0.1);
+        }
+
+        .screen-content img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+            transform: scale(1.23);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .screen-wrapper:hover .screen-content img {
+            transform: scale(1.28);
+        }
+
+        .screen-caption {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            padding: 0 8px;
+        }
+
+        .caption-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--border-light);
+        }
+
+        .caption-dot.blue {
+            background: var(--accent);
+        }
+
+        .caption-dot.teal {
+            background: var(--teal);
+        }
+
+        .screen-caption.blue {
+            color: var(--accent);
+        }
+
+        .screen-caption.teal {
+            color: var(--teal);
+        }
+
+        /* ===== ARCHITECTURE SECTION ===== */
+        .architecture-section {
+            padding: 40px 0 60px;
+        }
+
+        .arch-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .arch-card::before {
+            display: none;
+        }
+
+        .arch-card::after {
+            display: none;
+        }
+
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .arch-layer-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .arch-layer-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            background: var(--accent);
+        }
+
+        .arch-layer-title.teal {
+            color: var(--teal);
+        }
+
+        .arch-layer-title.teal::before {
+            background: var(--teal);
+        }
+
+        .arch-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .arch-item:last-child {
+            border-bottom: none;
+        }
+
+        .arch-item-icon {
+            font-size: 16px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* ===== FLOW SECTION ===== */
+        .flow-section {
+            padding: 40px 0 60px;
+        }
+
+        .flow-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flow-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 20px;
+            min-width: 120px;
+        }
+
+        .flow-step-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: var(--accent-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .flow-step-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .flow-arrow {
+            font-size: 20px;
+            color: var(--text-muted);
+            margin: 0 4px;
+            padding-bottom: 24px;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-left {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .footer-tech {
+            display: flex;
+            gap: 8px;
+        }
+
+        .footer-badge {
+            padding: 5px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate {
+            opacity: 0;
+            animation: fadeInUp 0.7s ease forwards;
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.4s;
+        }
+
+        .delay-5 {
+            animation-delay: 0.5s;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .hero-text h2 {
+                font-size: 40px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .screens-grid {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .screen-wrapper {
+                width: 100%;
+                max-width: 500px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .arch-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-steps {
+                flex-direction: column;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+                padding-bottom: 0;
+                margin: 0;
+            }
+
+            .footer {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .footer-tech {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 16px;
+            }
+
+            .hero-text h2 {
+                font-size: 32px;
+            }
+
+            .screens-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ===== TOP BANNER ===== -->
+    <div class="top-banner">
+        <h1>Strata — AI-ассистент для управления жизнью</h1>
+    </div>
+
+    <!-- ===== HERO ===== -->
+    <div class="container">
+        <section class="hero">
+            <div class="hero-text animate delay-1">
+                <h2>Strata<br>AI Assistant</h2>
+                <p class="subtitle">
+                    Персональный AI-ассистент в Telegram Mini App.
+                    Управляйте задачами, финансами, привычками и заметками голосом или текстом.
+                    Полный цикл от идеи до выполнения — без единого нажатия.
+                </p>
+                <div class="tech-badges">
+                    <span class="tech-badge">React 18</span>
+                    <span class="tech-badge">TypeScript</span>
+                    <span class="tech-badge">Vite</span>
+                    <span class="tech-badge">Supabase</span>
+                    <span class="tech-badge">OpenAI API</span>
+                    <span class="tech-badge">OpenAI Whisper</span>
+                    <span class="tech-badge">Telegram SDK</span>
+                    <span class="tech-badge">Tailwind CSS</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== STATS ===== -->
+    <div class="container">
+        <section class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card animate delay-1">
+                    <div class="stat-value gradient">4</div>
+                    <div class="stat-label">Модуля управления</div>
+                </div>
+                <div class="stat-card animate delay-2">
+                    <div class="stat-value gradient">9</div>
+                    <div class="stat-label">Таблиц в БД</div>
+                </div>
+                <div class="stat-card animate delay-3">
+                    <div class="stat-value gradient">15+</div>
+                    <div class="stat-label">AI-команд</div>
+                </div>
+                <div class="stat-card animate delay-4">
+                    <div class="stat-value gradient">24/7</div>
+                    <div class="stat-label">Голосовой ввод</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== FEATURES ===== -->
+    <div class="container">
+        <section class="features-section">
+            <div class="section-label animate">Ключевые возможности</div>
+            <div class="features-grid">
+                <div class="feature-card animate delay-1">
+                    <div class="feature-icon">🎙️</div>
+                    <h3>Голосовое управление</h3>
+                    <p>Запись голосовых сообщений, транскрипция через OpenAI Whisper, автоматическое распознавание
+                        команд из естественной речи. Скажи «потратил 500 на кофе» — ИИ всё сделает сам.</p>
+                </div>
+                <div class="feature-card animate delay-2">
+                    <div class="feature-icon teal">🧠</div>
+                    <h3>AI-исполнитель команд</h3>
+                    <p>OpenAI API не просто отвечает — выполняет действия. Парсинг 15+ специальных команд: создание
+                        задач, запись расходов, отметка привычек, сохранение заметок.</p>
+                </div>
+                <div class="feature-card animate delay-3">
+                    <div class="feature-icon">📋</div>
+                    <h3>Умные задачи</h3>
+                    <p>Парсинг времени из русского языка: «завтра в 9», «через 30 минут», «в следующую пятницу».
+                        Приоритеты, категории, напоминания и автоматическое завершение.</p>
+                </div>
+                <div class="feature-card animate delay-1">
+                    <div class="feature-icon teal">💰</div>
+                    <h3>Финансовый трекер</h3>
+                    <p>Учёт доходов и расходов через чат. Категоризация, поиск последних транзакций по описанию,
+                        корректировка сумм. Графики и аналитика через Recharts.</p>
+                </div>
+                <div class="feature-card animate delay-2">
+                    <div class="feature-icon">✨</div>
+                    <h3>Привычки с Fuzzy-поиском</h3>
+                    <p>Трекер привычек с целями и стриками. «Попил воды» → находит привычку «Пить 2л воды» по корням
+                        слов. Утро/день/вечер, визуальный прогресс.</p>
+                </div>
+                <div class="feature-card animate delay-3">
+                    <div class="feature-icon teal">📝</div>
+                    <h3>База знаний</h3>
+                    <p>Персональная память ИИ: заметки с тегами, поиском и закреплением. Команда APPEND_NOTE безопасно
+                        дописывает текст без потери данных.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== VOICE FLOW ===== -->
+    <div class="container">
+        <section class="flow-section">
+            <div class="section-label animate">Голосовой пайплайн</div>
+            <div class="flow-card animate delay-1">
+                <div class="flow-steps">
+                    <div class="flow-step">
+                        <div class="flow-step-icon">🎤</div>
+                        <span class="flow-step-label">Запись<br>аудио</span>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">☁️</div>
+                        <span class="flow-step-label">Upload<br>Supabase</span>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">🔊</div>
+                        <span class="flow-step-label">Whisper<br>STT</span>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">🧠</div>
+                        <span class="flow-step-label">OpenAI<br>API</span>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">⚡</div>
+                        <span class="flow-step-label">Команда<br>в БД</span>
+                    </div>
+                    <span class="flow-arrow">→</span>
+                    <div class="flow-step">
+                        <div class="flow-step-icon">✅</div>
+                        <span class="flow-step-label">Результат<br>в чат</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== SCREENS ===== -->
+    <div class="container">
+        <section class="screens-section">
+            <div class="section-label animate">Экраны приложения</div>
+            <div class="screens-grid">
+                <div class="screen-wrapper animate delay-1">
+                    <div class="screen-content">
+                        <img src="Rectangle.png" alt="AI Чат — текстовый и голосовой интерфейс">
+                    </div>
+                    <div class="screen-caption blue">
+                        <span class="caption-dot blue"></span>
+                        AI ЧАТ — ТЕКСТ И ГОЛОС, СТРИМИНГ
+                    </div>
+                </div>
+                <div class="screen-wrapper animate delay-2">
+                    <div class="screen-content">
+                        <img src="Rectangle-1.png" alt="Задачи — приоритеты и дедлайны">
+                    </div>
+                    <div class="screen-caption teal">
+                        <span class="caption-dot teal"></span>
+                        ЗАДАЧИ — ПРИОРИТЕТЫ И ДЕДЛАЙНЫ
+                    </div>
+                </div>
+                <div class="screen-wrapper animate delay-3">
+                    <div class="screen-content">
+                        <img src="Rectangle-2.png" alt="Память — заметки, теги и поиск">
+                    </div>
+                    <div class="screen-caption blue">
+                        <span class="caption-dot blue"></span>
+                        ПАМЯТЬ — ЗАМЕТКИ, ТЕГИ, ПОИСК
+                    </div>
+                </div>
+                <div class="screen-wrapper animate delay-4">
+                    <div class="screen-content">
+                        <img src="Rectangle-3.png" alt="Финансы — доходы, расходы и графики">
+                    </div>
+                    <div class="screen-caption teal">
+                        <span class="caption-dot teal"></span>
+                        ФИНАНСЫ — ДОХОДЫ, РАСХОДЫ, ГРАФИКИ
+                    </div>
+                </div>
+                <div class="screen-wrapper animate delay-5">
+                    <div class="screen-content">
+                        <img src="Rectangle-4.png" alt="Привычки — стрики, цели и логи">
+                    </div>
+                    <div class="screen-caption blue">
+                        <span class="caption-dot blue"></span>
+                        ПРИВЫЧКИ — СТРИКИ, ЦЕЛИ, ЛОГИ
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== ARCHITECTURE ===== -->
+    <div class="container">
+        <section class="architecture-section">
+            <div class="section-label animate">Архитектура и стек</div>
+            <div class="arch-card animate delay-1">
+                <div class="arch-grid">
+                    <div class="arch-layer">
+                        <div class="arch-layer-title">Frontend / UI</div>
+                        <div class="arch-item"><span class="arch-item-icon">⚛️</span> React 18 + TypeScript</div>
+                        <div class="arch-item"><span class="arch-item-icon">⚡</span> Vite (сборка)</div>
+                        <div class="arch-item"><span class="arch-item-icon">🎨</span> Tailwind CSS + Shadcn/UI</div>
+                        <div class="arch-item"><span class="arch-item-icon">📱</span> Telegram Web App SDK</div>
+                    </div>
+                    <div class="arch-layer">
+                        <div class="arch-layer-title teal">Backend / Логика</div>
+                        <div class="arch-item"><span class="arch-item-icon">🧠</span> OpenAI API (стриминг)</div>
+                        <div class="arch-item"><span class="arch-item-icon">🔊</span> OpenAI Whisper (STT)</div>
+                        <div class="arch-item"><span class="arch-item-icon">⚙️</span> Supabase Edge Functions</div>
+                        <div class="arch-item"><span class="arch-item-icon">🔀</span> Command Parser (regex)</div>
+                    </div>
+                    <div class="arch-layer">
+                        <div class="arch-layer-title">Данные / Интеграции</div>
+                        <div class="arch-item"><span class="arch-item-icon">🐘</span> PostgreSQL (Supabase)</div>
+                        <div class="arch-item"><span class="arch-item-icon">🔐</span> Row Level Security</div>
+                        <div class="arch-item"><span class="arch-item-icon">📦</span> Supabase Storage</div>
+                        <div class="arch-item"><span class="arch-item-icon">🔄</span> React Query (кэш)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <div class="container">
+        <footer class="footer">
+            <div class="footer-left">© 2026 Strata — Персональный AI-ассистент</div>
+            <div class="footer-tech">
+                <span class="footer-badge">React 18</span>
+                <span class="footer-badge">TypeScript</span>
+                <span class="footer-badge">Supabase</span>
+                <span class="footer-badge">OpenAI</span>
+                <span class="footer-badge">Whisper</span>
+                <span class="footer-badge">Telegram</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ===== SCROLL ANIMATIONS ===== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.animate').forEach(el => {
+                el.style.animationPlayState = 'paused';
+                observer.observe(el);
+            });
+        });
+    </script>
+
+</body>
+
+</html>
