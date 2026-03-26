@@ -18,13 +18,6 @@
 
 ![Full Showcase](f_63269baaa586c139.png)
 
-## 📸 Screenshots
-
-| | | | | |
-|:---:|:---:|:---:|:---:|:---:|
-| ![Screen 1](Rectangle.png) | ![Screen 2](Rectangle-1.png) | ![Screen 3](Rectangle-2.png) | ![Screen 4](Rectangle-3.png) | ![Screen 5](Rectangle-4.png) |
-
----
 
 ## ✨ Key Features
 
